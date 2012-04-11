@@ -20,24 +20,28 @@
 package de.NeptuneWhitebear.LootFilter;
 
 
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
 
 import java.util.logging.Logger;
 
-public class LootFilter extends JavaPlugin
+public class LootFilter$Commands implements CommandExecutor
 {
-
     Logger mcLogger;
-    LootFilter$PlayerListener listener;
 
-    public void onEnable()
+    public LootFilter$Commands(Logger mcLogger)
     {
-        mcLogger = getLogger();
-
-        new LootManager();
-        listener = new LootFilter$PlayerListener( mcLogger );
-        getServer().getPluginManager().registerEvents( listener, this );
-
+        this.mcLogger = mcLogger;
     }
 
+    public boolean onCommand( CommandSender commandSender, Command command, String s, String[] strings )
+    {
+        if( s.equalsIgnoreCase( "lootfilter" ) )
+        {
+            mcLogger.info( strings[0] );
+        }
+
+        return false;
+    }
 }

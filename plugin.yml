@@ -1,5 +1,17 @@
 name: LootFilter
 description: Allows players to filter loot pickup.
 author: Neptune Whitebear (Pinkishu @ BukkitDev)
-version: 0.0.0
+version: 0.1.0
 main: de.NeptuneWhitebear.LootFilter.LootFilter
+
+commands:
+    lootfilter:
+        description: LootFilter functions
+
+permissions:
+    lootfilter.ignore:
+        description: allows to ignore item pickup
+        default: false
+    lootfilter.limit:
+        description: allows to limit item pickup
+        default: false
