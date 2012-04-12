@@ -20,7 +20,6 @@
 package de.NeptuneWhitebear.LootFilter;
 
 
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -29,7 +28,7 @@ import java.util.logging.Logger;
 public class LootFilter extends JavaPlugin
 {
 
-    Logger mcLogger;
+    Logger                    mcLogger;
     LootFilter$PlayerListener listener;
 
     public void onEnable()
@@ -45,7 +44,7 @@ public class LootFilter extends JavaPlugin
 
     }
 
-    public static void playerMessage(Player player, String message)
+    public static void playerMessage( Player player, String message )
     {
         player.sendMessage( "[LootFilter] " + message );
     }

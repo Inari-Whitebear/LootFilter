@@ -19,12 +19,10 @@
 
 package de.NeptuneWhitebear.LootFilter;
 
-import org.bukkit.entity.Item;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerPickupItemEvent;
-import org.bukkit.inventory.ItemStack;
 
 import java.util.logging.Logger;
 
@@ -33,26 +31,28 @@ public class LootFilter$PlayerListener implements Listener
 
     Logger mcLogger;
 
-    public LootFilter$PlayerListener(Logger mcLogger)
+    public LootFilter$PlayerListener( Logger mcLogger )
     {
         this.mcLogger = mcLogger;
     }
 
     @EventHandler(priority = EventPriority.LOW)
-    public void onPickup(PlayerPickupItemEvent ev)
+    public void onPickup( PlayerPickupItemEvent ev )
     {
-        if( ev.isCancelled() ) return;
-        if( !ev.getPlayer().hasPermission( "lootfilter.ignore" ) ) return;
+        if ( ev.isCancelled() ) return;
+        if ( !ev.getPlayer().hasPermission( "lootfilter.ignore" ) ) return;
 
-        int pickupAmount = LootManager.getPickupAmount( ev.getPlayer(), ev.getItem().getItemStack().getType(), ev.getItem().getItemStack().getAmount() );
-        if( pickupAmount == -1 ) return;
-        if( pickupAmount >= 0 )
+        int pickupAmount = LootManager.getPickupAmount( ev.getPlayer(), ev.getItem().getItemStack().getType(),
+                                                        ev.getItem().getItemStack().getAmount() );
+        if ( pickupAmount == -1 ) return;
+        if ( pickupAmount >= 0 )
         {
             ev.setCancelled( true );
             return;
         }
 
-            /*
+
+        /*
         Item item = ev.getItem().getWorld().spawn( ev.getItem().getLocation(), Item.class );
         item.setPickupDelay( 3*20 );
         item.setItemStack( new ItemStack( ev.getItem().getItemStack() ) );

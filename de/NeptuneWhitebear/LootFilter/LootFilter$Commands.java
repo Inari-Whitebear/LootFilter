@@ -26,93 +26,126 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 public class LootFilter$Commands implements CommandExecutor
 {
     Logger mcLogger;
 
-    public LootFilter$Commands(Logger mcLogger)
+    public LootFilter$Commands( Logger mcLogger )
     {
         this.mcLogger = mcLogger;
     }
 
     public boolean onCommand( CommandSender commandSender, Command command, String s, String[] strings )
     {
-        if( s.equalsIgnoreCase( "lootfilter" ) )
+        if ( s.equalsIgnoreCase( "lootfilter" ) )
         {
-            if( strings[0].equalsIgnoreCase( "ignore" ) || strings[0].equalsIgnoreCase( "unignore" ) )
+            if ( strings[ 0 ].equalsIgnoreCase( "limit" ) || strings[ 0 ].equalsIgnoreCase( "unlimit" ) ||
+                 strings[ 0 ].equalsIgnoreCase( "ignore" ) || strings[ 0 ].equalsIgnoreCase( "unignore" ) )
             {
-                if( !commandSender.hasPermission( "lootfilter.ignore" ) )
+                String base = strings[ 0 ];
+                String perm = "limit";
+                if ( strings[ 0 ].equalsIgnoreCase( "unignore" ) || base.equalsIgnoreCase( "ignore" ) )
                 {
-                    LootFilter.playerMessage((Player)commandSender, "You are not allowed to use this function." );
+                    perm = "ignore";
+                }
+                if ( !commandSender.hasPermission( "lootfilter." + perm ) )
+                {
+                    LootFilter.playerMessage( (Player)commandSender, "You are not allowed to use this function." );
                     return true;
                 }
-                if( strings.length < 2 )
+                if ( strings.length < 2 )
                 {
-                    LootFilter.playerMessage( (Player)commandSender, "Usage: /lootfilter "+(strings[0].equalsIgnoreCase("ignore")?"ignore":"unignore")+" <item>" );
+                    LootFilter.playerMessage( (Player)commandSender, "Usage: /lootfilter " + base + " <item>" +
+                                                                     ( base.endsWith( "limit" ) ? " <amount>" : "" ) );
                     return true;
                 }
 
-                if( strings[1].equalsIgnoreCase( "all" ) )
+                if ( strings[ 1 ].equalsIgnoreCase( "all" ) )
                 {
-                    if( strings[0].equalsIgnoreCase( "unignore" ))
+                    if ( base.equalsIgnoreCase( "unlimit" ) || base.equalsIgnoreCase( "unignore" ) )
                     {
-                        LootManager.clearPlayerData( (Player)commandSender );
-                        LootFilter.playerMessage( (Player)commandSender, "Cleared ignore list." );
+                        if ( base.equalsIgnoreCase( "unlimit" ) )
+                            LootManager.clearLimitedMaterials( (Player)commandSender );
+                        else
+                            LootManager.clearIgnoredMaterials( (Player)commandSender );
+                        LootFilter.playerMessage( (Player)commandSender, "Cleared " + perm + " list." );
                         return true;
                     }
                 }
 
-                Material mat = Material.matchMaterial( strings[1] );
-                if( mat == null )
+                Material mat = Material.matchMaterial( strings[ 1 ] );
+                if ( mat == null )
                 {
-                    LootFilter.playerMessage( (Player)commandSender, "Material " + strings[1] + " could not be found." );
+                    LootFilter.playerMessage( (Player)commandSender,
+                                              "Material " + strings[ 1 ] + " could not be found." );
                     return true;
                 }
 
-                boolean result = false;
-                if( strings[0].equalsIgnoreCase( "ignore" ))
+                boolean result;
+                if ( base.equalsIgnoreCase( "ignore" ) || base.equalsIgnoreCase( "limit" ) )
                 {
-                    result = LootManager.setPlayerData( (Player)commandSender, mat, 0 );
-                }
-                else
+                    try
+                    {
+                        int amount = 0;
+                        if ( base.equalsIgnoreCase( "limit" ) )
+                        {
+                            amount = Integer.parseInt( strings[ 1 ] );
+                        }
+                        result = LootManager.setPlayerData( (Player)commandSender, mat, amount );
+                    } catch ( NumberFormatException ex )
+                    {
+                        LootFilter.playerMessage( (Player)commandSender, "Invalid number format." );
+                        return true;
+                    }
+                } else
                 {
                     result = LootManager.unsetPlayerData( (Player)commandSender, mat );
                 }
-                if( result )
-                    LootFilter.playerMessage( (Player)commandSender, (strings[0].equalsIgnoreCase( "ignore" )?"I":"Uni") + "gnored " + mat.name().toLowerCase() + "." );
+                if ( result )
+                    LootFilter.playerMessage( (Player)commandSender,
+                                              ( strings[ 0 ].equalsIgnoreCase( "ignore" ) ? "I" : "Uni" ) + "gnored " +
+                                              mat.name().toLowerCase() + "." );
                 else
-                    LootFilter.playerMessage( (Player)commandSender, mat.name().toLowerCase() + " is "+(strings[0].equalsIgnoreCase( "ignore" )?"already":"not") + " on your ignore list." );
+                    LootFilter.playerMessage( (Player)commandSender, mat.name().toLowerCase() + " is " + ( strings[ 0 ]
+                                                                                                                   .equalsIgnoreCase(
+                                                                                                                           "ignore" ) ? "already" : "not" ) +
+                                                                     " on your ignore list." );
                 return true;
-            }
-            else if( strings[0].equalsIgnoreCase( "list" ) )
+            } else if ( strings[ 0 ].equalsIgnoreCase( "list" ) )
             {
-                HashSet<Material> materials = LootManager.getIgnoredMaterials((Player)commandSender);
+                HashMap<Material, Integer> materials = LootManager.getPlayerData( (Player)commandSender );
 
-                if( materials == null || materials.size() == 0 )
+                if ( materials == null || materials.size() == 0 )
                 {
-                    LootFilter.playerMessage( (Player)commandSender, "Nothing ignored." );
+                    LootFilter.playerMessage( (Player)commandSender, "Nothing ignored or limited." );
                     return true;
                 }
 
-                String out = "Materials ignored: ";
-                for(Material mat: materials)
+                String out = "Materials limited/ignored: ";
+
+                for ( Material mat : materials.keySet() )
                 {
-                    out += mat.name().toLowerCase() + ", ";
+                    if ( materials.get( mat ) == -1 ) continue;
+                    out += mat.name().toLowerCase();
+                    if ( materials.get( mat ) != 0 )
+                    {
+                        out += " (" + materials.get( mat ) + ")";
+                    }
+                    out += ", ";
                 }
-                if( materials.size() > 0 )
+                if ( materials.size() > 0 )
                 {
-                    out = out.substring( 0, out.length()-2 );
+                    out = out.substring( 0, out.length() - 2 );
                 }
 
                 LootFilter.playerMessage( (Player)commandSender, out );
                 return true;
-            }
-            else
+            } else
             {
-                LootFilter.playerMessage( (Player)commandSender, "Option " + strings[0] + " not found." );
+                LootFilter.playerMessage( (Player)commandSender, "Option " + strings[ 0 ] + " not found." );
                 return true;
             }
 
