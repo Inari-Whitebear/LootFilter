@@ -20,10 +20,13 @@
 package de.NeptuneWhitebear.LootFilter;
 
 
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
+import java.util.HashSet;
 import java.util.logging.Logger;
 
 public class LootFilter$Commands implements CommandExecutor
@@ -39,7 +42,80 @@ public class LootFilter$Commands implements CommandExecutor
     {
         if( s.equalsIgnoreCase( "lootfilter" ) )
         {
-            mcLogger.info( strings[0] );
+            if( strings[0].equalsIgnoreCase( "ignore" ) || strings[0].equalsIgnoreCase( "unignore" ) )
+            {
+                if( !commandSender.hasPermission( "lootfilter.ignore" ) )
+                {
+                    LootFilter.playerMessage((Player)commandSender, "You are not allowed to use this function." );
+                    return true;
+                }
+                if( strings.length < 2 )
+                {
+                    LootFilter.playerMessage( (Player)commandSender, "Usage: /lootfilter "+(strings[0].equalsIgnoreCase("ignore")?"ignore":"unignore")+" <item>" );
+                    return true;
+                }
+
+                if( strings[1].equalsIgnoreCase( "all" ) )
+                {
+                    if( strings[0].equalsIgnoreCase( "unignore" ))
+                    {
+                        LootManager.clearPlayerData( (Player)commandSender );
+                        LootFilter.playerMessage( (Player)commandSender, "Cleared ignore list." );
+                        return true;
+                    }
+                }
+
+                Material mat = Material.matchMaterial( strings[1] );
+                if( mat == null )
+                {
+                    LootFilter.playerMessage( (Player)commandSender, "Material " + strings[1] + " could not be found." );
+                    return true;
+                }
+
+                boolean result = false;
+                if( strings[0].equalsIgnoreCase( "ignore" ))
+                {
+                    result = LootManager.setPlayerData( (Player)commandSender, mat, 0 );
+                }
+                else
+                {
+                    result = LootManager.unsetPlayerData( (Player)commandSender, mat );
+                }
+                if( result )
+                    LootFilter.playerMessage( (Player)commandSender, (strings[0].equalsIgnoreCase( "ignore" )?"I":"Uni") + "gnored " + mat.name().toLowerCase() + "." );
+                else
+                    LootFilter.playerMessage( (Player)commandSender, mat.name().toLowerCase() + " is "+(strings[0].equalsIgnoreCase( "ignore" )?"already":"not") + " on your ignore list." );
+                return true;
+            }
+            else if( strings[0].equalsIgnoreCase( "list" ) )
+            {
+                HashSet<Material> materials = LootManager.getIgnoredMaterials((Player)commandSender);
+
+                if( materials == null || materials.size() == 0 )
+                {
+                    LootFilter.playerMessage( (Player)commandSender, "Nothing ignored." );
+                    return true;
+                }
+
+                String out = "Materials ignored: ";
+                for(Material mat: materials)
+                {
+                    out += mat.name().toLowerCase() + ", ";
+                }
+                if( materials.size() > 0 )
+                {
+                    out = out.substring( 0, out.length()-2 );
+                }
+
+                LootFilter.playerMessage( (Player)commandSender, out );
+                return true;
+            }
+            else
+            {
+                LootFilter.playerMessage( (Player)commandSender, "Option " + strings[0] + " not found." );
+                return true;
+            }
+
         }
 
         return false;

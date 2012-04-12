@@ -25,6 +25,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class LootManager
 {
@@ -35,6 +36,7 @@ public class LootManager
     public LootManager()
     {
         instance = this;
+        playerData = new HashMap<Player, HashMap<Material, Integer>>();
     }
 
     public static HashMap<Material,Integer> getPlayerData(Player player)
@@ -52,7 +54,7 @@ public class LootManager
         playerData.put( player, new HashMap<Material, Integer>() );
     }
 
-    public static void setPlayerData(Player player, Material material, Integer amount)
+    public static boolean setPlayerData(Player player, Material material, Integer amount)
     {
         if( !playerData.containsKey( player ))
         {
@@ -61,23 +63,85 @@ public class LootManager
         }
 
         HashMap<Material, Integer> playerData = getPlayerData( player );
-        playerData.put( material, amount );
+        if( playerData.containsKey( material ) )
+        {
+            if( playerData.get( material ) != amount )
+            {
+                playerData.put( material, amount );
+                return true;
+            }
+            return false;
+        }
+        else
+        {
+            playerData.put( material, amount );
+            return true;
+        }
+    }
+
+    public static boolean unsetPlayerData(Player player, Material material)
+    {
+        if( !playerData.containsKey( player ) )
+        {
+            return false;
+        }
+
+        HashMap<Material, Integer> playerData = getPlayerData( player );
+        if( playerData.containsKey( material ))
+        {
+            playerData.remove( material );
+            return true;
+        }
+        else
+            return false;
+    }
+
+    public static HashSet<Material> getIgnoredMaterials(Player player)
+    {
+        HashMap<Material,Integer> playerData = getPlayerData( player );
+        if( playerData == null )
+        {
+            return null;
+        }
+        else
+        {
+            return new HashSet<Material>( playerData.keySet() );
+        }
+    }
+
+    public static void clearPlayerData( Player player )
+    {
+        if( getPlayerData( player ) != null )
+        {
+            playerData.remove( player );
+        }
     }
 
     public static int getPickupAmount( Player player, Material material, Integer amount )
     {
         HashMap<Material, Integer> playerData = getPlayerData( player );
+        if( playerData == null )
+        {
+            return -1;
+        }
         if( !playerData.containsKey( material ) ) return -1;
-        if( playerData.get( material ) == 0 ) return 0;
+        if( playerData.get( material ) == 0 )
+        {
+            if( player.hasPermission( "lootfilter.ignore" ) )
+                return 0;
+            else
+                return -1;
+        }
         int playerAmount = 0;
         for( ItemStack itemStack : player.getInventory().getContents())
         {
+            if( itemStack == null ) continue;
             if( itemStack.getType() == material)
             {
                 playerAmount += itemStack.getAmount();
             }
         }
-        if( playerAmount + amount < playerData.get( material ) )
+        if( playerAmount + amount <= playerData.get( material ) )
             return -1;
         if( playerAmount + 1 < playerData.get( material )  )
         {

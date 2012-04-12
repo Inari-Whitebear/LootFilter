@@ -42,22 +42,22 @@ public class LootFilter$PlayerListener implements Listener
     public void onPickup(PlayerPickupItemEvent ev)
     {
         if( ev.isCancelled() ) return;
+        if( !ev.getPlayer().hasPermission( "lootfilter.ignore" ) ) return;
 
-        mcLogger.info( "Pickup: " + ev.getItem().getItemStack().getType().name() + " / " + ev.getItem().getItemStack().getAmount() );
         int pickupAmount = LootManager.getPickupAmount( ev.getPlayer(), ev.getItem().getItemStack().getType(), ev.getItem().getItemStack().getAmount() );
         if( pickupAmount == -1 ) return;
-        if( pickupAmount == 0 )
+        if( pickupAmount >= 0 )
         {
             ev.setCancelled( true );
             return;
         }
 
-
+            /*
         Item item = ev.getItem().getWorld().spawn( ev.getItem().getLocation(), Item.class );
         item.setPickupDelay( 3*20 );
         item.setItemStack( new ItemStack( ev.getItem().getItemStack() ) );
         item.getItemStack().setAmount( ev.getItem().getItemStack().getAmount() - pickupAmount );
-        ev.getItem().getItemStack().setAmount( pickupAmount );
+        ev.getItem().getItemStack().setAmount( pickupAmount );  */
 
     }
 
